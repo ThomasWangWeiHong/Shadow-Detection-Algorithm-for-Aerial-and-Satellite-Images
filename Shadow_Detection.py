@@ -1,10 +1,11 @@
+import cv2
 import gc
 import numpy as np
 import pandas as pd
 import rasterio
 from skimage.color import lab2lch, rgb2lab
 from skimage.exposure import rescale_intensity
-from skimage.morphology import binary_closing, disk
+from skimage.morphology import disk
 from sklearn.cluster import KMeans
 
 
@@ -16,7 +17,8 @@ def shadow_detection(image_file, shadow_mask_file, convolve_window_size = 5, num
     Doth R., Amaral L.A., de Azevedo D.F.G. (2017)
     
     Inputs:
-    - image_file: Path of 3 - channel (red, green, blue) image to be processed for shadow removal
+    - image_file: Path of image to be processed for shadow removal. It is assumed that the first 3 channels are ordered as
+                  Red, Green and Blue respectively
     - shadow_mask_file: Path of shadow mask to be saved
     - convolve_window_size: Size of convolutional matrix filter to be used for blurring of specthem ratio image
     - num_thresholds: Number of thresholds to be used for automatic multilevel global threshold determination
@@ -36,6 +38,7 @@ def shadow_detection(image_file, shadow_mask_file, convolve_window_size = 5, num
     with rasterio.open(image_file) as f:
         metadata = f.profile
         img = rescale_intensity(np.transpose(f.read(tuple(np.arange(metadata['count']) + 1)), [1, 2, 0]), out_range = 'uint8')
+        img = img[:, :, 0 : 3]
     
     
     lch_img = np.float32(lab2lch(rgb2lab(img)))
@@ -48,18 +51,14 @@ def shadow_detection(image_file, shadow_mask_file, convolve_window_size = 5, num
     
     del l_norm, h_norm, sr_img
     gc.collect()
+
     
-    
-    log_sr_img_padded = np.zeros(((log_sr_img.shape[0] + 2 * buffer), (log_sr_img.shape[1] + 2 * buffer)))
-    log_sr_img_padded[buffer : (buffer + log_sr_img.shape[0]), buffer : (buffer + log_sr_img.shape[1])] = log_sr_img
-    blurred_sr_img = np.zeros((log_sr_img.shape[0], log_sr_img.shape[1]))
-    for i in range(buffer, log_sr_img_padded.shape[0] - buffer):            
-            for j in range(buffer, log_sr_img_padded.shape[1] - buffer) :                                                                                                                                   
-                array = log_sr_img_padded[(i - buffer) : (i + buffer + 1), (j - buffer) : (j + buffer + 1)]
-                blurred_sr_img[i - buffer, j - buffer] = np.mean(array)
+
+    avg_kernel = np.ones((convolve_window_size, convolve_window_size)) / (convolve_window_size ** 2)
+    blurred_sr_img = cv2.filter2D(log_sr_img, ddepth = -1, kernel = avg_kernel)
       
     
-    del log_sr_img, log_sr_img_padded
+    del log_sr_img
     gc.collect()
     
                 
@@ -77,7 +76,7 @@ def shadow_detection(image_file, shadow_mask_file, convolve_window_size = 5, num
     
     shadow_mask_initial = np.array(df['Segmented']).reshape((img.shape[0], img.shape[1]))
     struc_elem = disk(struc_elem_size)
-    shadow_mask = np.expand_dims(np.uint8(binary_closing(shadow_mask_initial, selem = struc_elem)), axis = 0)
+    shadow_mask = np.expand_dims(np.uint8(cv2.morphologyEx(shadow_mask_initial, cv2.MORPH_CLOSE, struc_elem)), axis = 0)
     
     
     del df, shadow_mask_initial, struc_elem
