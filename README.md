@@ -9,9 +9,25 @@ In addition, the multilevel Otsu thresholding method is not used in view of the 
 As such, it is replaced by the K - Means clustering algorithm, which is another method to determine the multiple thresholds in a global context, which would give a close approximation to that of the multilevel Otsu thresholding method.
 
 Requirements:
+- cv2
 - gc
 - numpy
 - pandas
 - rasterio
 - scikit - image
 - scikit - learn
+
+Test Image (courtesy of INRIA Aerial Image Labeling Dataset):
+![alt text](https://github.com/ThomasWangWeiHong/Shadow-Detection-Algorithm-for-Aerial-and-Satellite-Images/blob/master/Test_Image.JPG)
+
+Shadow Mask:
+![alt text](https://github.com/ThomasWangWeiHong/Shadow-Detection-Algorithm-for-Aerial-and-Satellite-Images/blob/master/Shadow_Mask_Image.JPG)
+
+Shadow Compensated Image:
+![alt text](https://github.com/ThomasWangWeiHong/Shadow-Detection-Algorithm-for-Aerial-and-Satellite-Images/blob/master/Shadow_Compensated_Image.JPG)
+
+Close Up View of one portion of Test Image:
+![alt text](https://github.com/ThomasWangWeiHong/Shadow-Detection-Algorithm-for-Aerial-and-Satellite-Images/blob/master/Zoomed_In_Original_Image.JPG)
+
+Close Up View of corresponding Shadow Compensated Image:
+![alt text](https://github.com/ThomasWangWeiHong/Shadow-Detection-Algorithm-for-Aerial-and-Satellite-Images/blob/master/Zoomed_In_Shadow_Compensated_Image.JPG)
